@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextGen Solutions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        #sidebar {
+            width: 200px;
+            background-color: #1e293b;
+            color: white;
+            padding: 20px;
+            height: 100vh;
+        }
+        #content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .menu-item {
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .card-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .card {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            width: 22%;
+        }
+        .stat-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .stat {
+            background-color: #4caf50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            width: 22%;
+        }
+        .chart-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .chart {
+            width: 48%;
+            height: 300px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        #searchBar {
+            margin-bottom: 20px;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #productForm {
+            margin-bottom: 20px;
+        }
+        #productForm input {
+            padding: 8px;
+            margin-right: 10px;
+        }
+        #productForm button {
+            padding: 8px 16px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        /* ... (previous styles remain unchanged) ... */
+
+        /* Add these new styles for the login modal */
+        #loginModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px;
+            text-align: center;
+        }
+
+        .login-btn {
+            display: block;
+            width: 80%;
+            margin: 10px auto;
+            padding: 10px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+
+    
+</head>
+<body>
+    <div id="sidebar">
+        <h2>NextGen Solutions</h2>
+        <div class="menu-item">Dashboard</div>
+        <div class="menu-item">Product</div>
+        <div class="menu-item">Sales</div>
+        <div class="menu-item">Purchase</div>
+        <div class="login">LOGIN</div>
+    </div>
+    <div id="content">
+        <h2>Welcome to the Dashboard</h2>
+        <p>Select an option from the menu to view details.</p>
+    </div>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Login</h2>
+            <button class="login-btn" onclick="login('employee')">Login as Employee</button>
+            <button class="login-btn" onclick="login('admin')">Login as Admin</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script>
+        // Menu items
+        const menuItems = document.querySelectorAll('.menu-item');
+        const content = document.getElementById('content');
+
+        // Function to load dashboard content
+        function loadDashboard() {
+            content.innerHTML = ` 
+                <div class="card-container">
+                    <div class="card">
+                        <h3>Total Purchase Due</h3>
+                        <p>$307144</p>
+                    </div>
+                    <div class="card">
+                        <h3>Total Sales Due</h3>
+                        <p>$4385</p>
+                    </div>
+                    <div class="card">
+                        <h3>Total Sale Amount</h3>
+                        <p>$385656.5</p>
+                    </div>
+                    <div class="card">
+                        <h3>Total Sale Amount</h3>
+                        <p>$40000</p>
+                    </div>
+                </div>
+                <div class="stat-container">
+                    <div class="stat">
+                        <h3>100</h3>
+                        <p>Customers</p>
+                    </div>
+                    <div class="stat">
+                        <h3>100</h3>
+                        <p>Suppliers</p>
+                    </div>
+                    <div class="stat">
+                        <h3>100</h3>
+                        <p>Purchase Invoice</p>
+                    </div>
+                    <div class="stat">
+                        <h3>105</h3>
+                        <p>Sales Invoice</p>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div id="salesChart" class="chart"></div>
+                    <div id="purchaseChart" class="chart"></div>
+                </div>
+            `;
+
+            // Dynamically create charts
+            const salesCtx = document.createElement('canvas');
+            document.getElementById('salesChart').appendChild(salesCtx);
+
+            const purchaseCtx = document.createElement('canvas');
+            document.getElementById('purchaseChart').appendChild(purchaseCtx);
+
+            new Chart(salesCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+                    datasets: [{
+                        label: 'Sales',
+                        data: [50, 40, 60, 70, 50, 40, 50, 70],
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            new Chart(purchaseCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+                    datasets: [{
+                        label: 'Purchase',
+                        data: [20, 55, 45, 30, 20, 55, 45, 30],
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Function to load product page
+        function loadProductPage() {
+            content.innerHTML = `
+                <h2>Product Management</h2>
+                <div id="productForm">
+                    <input type="text" id="productName" placeholder="Product Name" required>
+                    <input type="number" id="productPrice" placeholder="Product Price" required>
+                    <button onclick="addProduct()">Add Product</button>
+                </div>
+                <input type="text" id="searchBar" placeholder="Search product...">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sno</th>
+                            <th>Product</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productTable"></tbody>
+                </table>
+            `;
+
+            loadProducts();
+            document.getElementById('searchBar').addEventListener('input', searchProduct);
+        }
+
+        // Sample product data
+        const products = [
+            { name: 'Apple Earpods', price: 891.2 },
+            { name: 'iPhone 11', price: 668.51 },
+            { name: 'Samsung Galaxy', price: 622.29 },
+            { name: 'Macbook Pro', price: 291.01 }
+        ];
+
+        // Load products into the table
+        function loadProducts() {
+            const productTable = document.getElementById('productTable');
+            productTable.innerHTML = ''; // Clear the table
+            products.forEach((product, index) => {
+                const row = productTable.insertRow();
+                row.insertCell(0).textContent = index + 1;
+                row.insertCell(1).textContent = product.name;
+                row.insertCell(2).textContent = `$${product.price.toFixed(2)}`;
+            });
+        }
+
+        // Add a new product
+        function addProduct() {
+            const name = document.getElementById('productName').value;
+            const price = parseFloat(document.getElementById('productPrice').value);
+
+            if (name && price) {
+                products.push({ name, price });
+                loadProducts();
+            }
+        }
+
+        // Search for a product
+        function searchProduct() {
+            const query = document.getElementById('searchBar').value.toLowerCase();
+            const rows = document.getElementById('productTable').getElementsByTagName('tr');
+
+            Array.from(rows).forEach(row => {
+                const productName = row.cells[1].textContent.toLowerCase();
+                row.style.display = productName.includes(query) ? '' : 'none';
+            });
+        }
+
+        // Function to load sales page
+        function loadSalesPage() {
+            content.innerHTML = `<h2>Sales Management</h2>`;
+        }
+
+        // Function to load purchase page
+        function loadPurchasePage() {
+            content.innerHTML = `
+                <h2>Purchase Management</h2>
+                <div class="card-container">
+                    <div class="card">
+                        <h3>New Purchase</h3>
+                        <p>Details about new purchase.</p>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sno</th>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Macbook Pro</td>
+                            <td>$1200</td>
+                            <td>2</td>
+                            <td>$2400</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Set up menu click event listeners
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                if (item.textContent === 'Dashboard') {
+                    loadDashboard();
+                } else if (item.textContent === 'Product') {
+                    loadProductPage();
+                } else if (item.textContent === 'Sales') {
+                    loadSalesPage();
+                } else if (item.textContent === 'Purchase') {
+                    loadPurchasePage();
+                }
+            });
+        });
+
+        // Load the default page (Dashboard)
+        loadDashboard();
+    </script>
+         <script>
+            // Function to load sales page
+            function loadSalesPage() {
+                content.innerHTML = `
+                    <h2>Sales Management</h2>
+                    <div class="card-container">
+                        <div class="card">
+                            <h3>New Sale</h3>
+                            <p>Details about new sale.</p>
+                        </div>
+                        <div class="card">
+                            <h3>Sales Summary</h3>
+                            <p>Overview of sales data.</p>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Sno</th>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>Apple Earpods</td>
+                                <td>$89.99</td>
+                                <td>3</td>
+                                <td>$269.97</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>Macbook Pro</td>
+                                <td>$1200.00</td>
+                                <td>2</td>
+                                <td>$2400.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+            }
+        
+            // Set up menu click event listeners
+            menuItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    if (item.textContent === 'Dashboard') {
+                        loadDashboard();
+                    } else if (item.textContent === 'Product') {
+                        loadProductPage();
+                    } else if (item.textContent === 'Sales') {
+                        loadSalesPage(); // Trigger the sales page when the Sales button is clicked
+                    } else if (item.textContent === 'Purchase') {
+                        loadPurchasePage();
+                    }
+                });
+            });
+        </script>
+
+<script>
+    // Function to load sales page
+    function loadSalesPage() {
+        content.innerHTML = `
+            <h2>Sales Management</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>New Sale</h3>
+                    <p>Details about new sale.</p>
+                </div>
+                <div class="card">
+                    <h3>Sales Summary</h3>
+                    <p>Overview of sales data.</p>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div id="salesChart" class="chart"></div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sno</th>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Apple Earpods</td>
+                        <td>$89.99</td>
+                        <td>3</td>
+                        <td>$269.97</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Macbook Pro</td>
+                        <td>$1200.00</td>
+                        <td>2</td>
+                        <td>$2400.00</td>
+                    </tr>
+                </tbody>
+            </table>
+        `;
+
+        // Dynamically create the sales chart
+        const salesCtx = document.createElement('canvas');
+        document.getElementById('salesChart').appendChild(salesCtx);
+
+        new Chart(salesCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'], // Monthly labels
+                datasets: [{
+                    label: 'Sales ($)',
+                    data: [3000, 2000, 2500, 3200, 2800, 3500, 4000, 4200], // Example sales data
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)', // Greenish color for bars
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Amount ($)'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Monthly Sales'
+                    }
+                }
+            }
+        });
+    }
+
+    // Set up menu click event listeners
+    menuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            if (item.textContent === 'Dashboard') {
+                loadDashboard();
+            } else if (item.textContent === 'Product') {
+                loadProductPage();
+            } else if (item.textContent === 'Sales') {
+                loadSalesPage(); // Trigger the sales page with the graph when the Sales button is clicked
+            } else if (item.textContent === 'Purchase') {
+                loadPurchasePage();
+            }
+        });
+    });
+</script>
+
+<script>
+    // Function to load purchase page
+    function loadPurchasePage() {
+        content.innerHTML = `
+            <h2>Purchase Management</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>New Purchase</h3>
+                    <p>Details about new purchase.</p>
+                </div>
+                <div class="card">
+                    <h3>Purchase Summary</h3>
+                    <p>Overview of purchase data.</p>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div id="purchaseChart" class="chart"></div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sno</th>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Macbook Pro</td>
+                        <td>$1200</td>
+                        <td>2</td>
+                        <td>$2400</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>iPhone 11</td>
+                        <td>$668.51</td>
+                        <td>1</td>
+                        <td>$668.51</td>
+                    </tr>
+                </tbody>
+            </table>
+        `;
+
+        // Dynamically create the purchase chart
+        const purchaseCtx = document.createElement('canvas');
+        document.getElementById('purchaseChart').appendChild(purchaseCtx);
+
+        new Chart(purchaseCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'], // Monthly labels
+                datasets: [{
+                    label: 'Purchases ($)',
+                    data: [1000, 1500, 1200, 1800, 1400, 2000, 2500, 2800], // Example purchase data
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)', // Red color for bars
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Amount ($)'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Monthly Purchases'
+                    }
+                }
+            }
+        });
+    }
+
+    // Set up menu click event listeners
+    menuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            if (item.textContent === 'Dashboard') {
+                loadDashboard();
+            } else if (item.textContent === 'Product') {
+                loadProductPage();
+            } else if (item.textContent === 'Sales') {
+                loadSalesPage();
+            } else if (item.textContent === 'Purchase') {
+                loadPurchasePage(); // Trigger the purchase page with the graph when the Purchase button is clicked
+            }
+        });
+    });
+</script>
+
+<script>
+    // Sample purchase data
+    const purchases = [
+        { product: 'Macbook Pro', price: 1200, quantity: 2, total: 2400 },
+        { product: 'iPhone 11', price: 668.51, quantity: 1, total: 668.51 }
+    ];
+
+    // Function to load purchase page
+    function loadPurchasePage() {
+        content.innerHTML = `
+            <h2>Purchase Management</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>New Purchase</h3>
+                    <p>Add a new purchase to the system.</p>
+                    <form id="purchaseForm">
+                        <input type="text" id="productName" placeholder="Product Name" required><br><br>
+                        <input type="number" id="productPrice" placeholder="Product Price" required><br><br>
+                        <input type="number" id="productQuantity" placeholder="Quantity" required><br><br>
+                        <button type="submit">Add Purchase</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>Purchase Summary</h3>
+                    <p>Overview of purchase data.</p>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div id="purchaseChart" class="chart"></div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sno</th>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="purchaseTable"></tbody>
+            </table>
+        `;
+
+        // Dynamically create the purchase chart
+        const purchaseCtx = document.createElement('canvas');
+        document.getElementById('purchaseChart').appendChild(purchaseCtx);
+
+        // Render initial purchase chart
+        renderPurchaseChart();
+
+        // Render the table
+        loadPurchaseTable();
+
+        // Add event listener to the form for adding purchases
+        document.getElementById('purchaseForm').addEventListener('submit', addPurchase);
+    }
+
+    // Render purchase chart
+    function renderPurchaseChart() {
+        const purchaseCtx = document.getElementById('purchaseChart').getElementsByTagName('canvas')[0];
+        
+        new Chart(purchaseCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'], // Monthly labels
+                datasets: [{
+                    label: 'Purchases ($)',
+                    data: getPurchaseAmounts(), // Get updated purchase amounts
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)', // Red color for bars
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Amount ($)'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Monthly Purchases'
+                    }
+                }
+            }
+        });
+    }
+
+    // Get the total purchase amounts by month
+    function getPurchaseAmounts() {
+        // Example: return an array of total purchases for each month
+        return [1000, 1500, 1200, 1800, 1400, 2000, 2500, 2800]; // Replace with actual data
+    }
+
+    // Render the purchase table
+    function loadPurchaseTable() {
+        const purchaseTable = document.getElementById('purchaseTable');
+        purchaseTable.innerHTML = ''; // Clear the table
+        purchases.forEach((purchase, index) => {
+            const row = purchaseTable.insertRow();
+            row.insertCell(0).textContent = index + 1;
+            row.insertCell(1).textContent = purchase.product;
+            row.insertCell(2).textContent = `$${purchase.price.toFixed(2)}`;
+            row.insertCell(3).textContent = purchase.quantity;
+            row.insertCell(4).textContent = `$${purchase.total.toFixed(2)}`;
+        });
+    }
+
+    // Add a new purchase
+    function addPurchase(event) {
+        event.preventDefault(); // Prevent form submission
+
+        const productName = document.getElementById('productName').value;
+        const productPrice = parseFloat(document.getElementById('productPrice').value);
+        const productQuantity = parseInt(document.getElementById('productQuantity').value);
+
+        if (productName && productPrice && productQuantity) {
+            const total = productPrice * productQuantity;
+
+            // Add the new purchase to the array
+            purchases.push({ product: productName, price: productPrice, quantity: productQuantity, total });
+
+            // Clear the form fields
+            document.getElementById('purchaseForm').reset();
+
+            // Reload the purchase table and chart with updated data
+            loadPurchaseTable();
+            renderPurchaseChart();
+        } else {
+            alert('Please fill in all fields');
+        }
+    }
+
+    // Set up menu click event listeners
+    menuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            if (item.textContent === 'Dashboard') {
+                loadDashboard();
+            } else if (item.textContent === 'Product') {
+                loadProductPage();
+            } else if (item.textContent === 'Sales') {
+                loadSalesPage();
+            } else if (item.textContent === 'Purchase') {
+                loadPurchasePage(); // Trigger the purchase page with the form and graph
+            }
+        });
+    });
+</script>
+<script>
+    // ... (previous JavaScript code remains unchanged) ...
+
+    // Add this new login modal functionality
+    const loginButton = document.getElementById('loginButton');
+    const loginModal = document.getElementById('loginModal');
+    const closeButton = document.getElementsByClassName('close')[0];
+
+    loginButton.onclick = function() {
+        loginModal.style.display = "block";
+    }
+
+    closeButton.onclick = function() {
+        loginModal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == loginModal) {
+            loginModal.style.display = "none";
+        }
+    }
+
+    function login(userType) {
+        alert(`Logging in as ${userType}`);
+        // Here you would typically handle the login process
+        // For now, we'll just close the modal
+        loginModal.style.display = "none";
+    }
+
+    // ... (rest of the JavaScript code remains unchanged) ...
+</script>
+
+
+
+        
+</body>
+</html>
